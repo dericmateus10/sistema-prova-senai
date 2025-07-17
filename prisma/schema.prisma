@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" 
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -64,14 +64,17 @@ model CapabilitiesSaep {
   description       String
   bloomTaxonomyId   Int
   ucId              Int
+  subFunctionId     Int                // novo campo
   tipo              Tipo
 
   bloomTaxonomy     BloomTaxonomy     @relation(fields: [bloomTaxonomyId], references: [id], onDelete: Cascade)
   uc                Uc                @relation(fields: [ucId], references: [id], onDelete: Cascade)
+  subFunction       SubFunction       @relation(fields: [subFunctionId], references: [id], onDelete: Cascade)
   capabilities      Capability[]
 
   @@index([bloomTaxonomyId])
   @@index([ucId])
+  @@index([subFunctionId])     // índice para otimização
   @@map("capabilities_saep")
 }
 
@@ -91,6 +94,8 @@ model SubFunction {
 
   function     Functions            @relation(fields: [functionId], references: [id], onDelete: Cascade)
   standards    PerformanceStandard[]
+  saepCaps     CapabilitiesSaep[]
+  caps         Capability[]         // permite navegar da subfunção para capacidades associadas
 
   @@index([functionId])
   @@map("sub_functions")
@@ -123,19 +128,21 @@ model Capability {
   bloomTaxonomyId     Int
   ucId                Int
   capabilitySaepId    Int?
+  subFunctionId       Int                     // novo campo
 
   bloomTaxonomy       BloomTaxonomy           @relation(fields: [bloomTaxonomyId], references: [id], onDelete: Cascade)
   uc                  Uc                      @relation(fields: [ucId], references: [id], onDelete: Cascade)
   saep                CapabilitiesSaep?       @relation(fields: [capabilitySaepId], references: [id], onDelete: Cascade)
+  subFunction         SubFunction             @relation(fields: [subFunctionId], references: [id], onDelete: Cascade)
   knowledgeLinks      CapabilityKnowledge[]
 
   @@index([bloomTaxonomyId])
   @@index([ucId])
   @@index([capabilitySaepId])
+  @@index([subFunctionId])    // índice para otimização
   @@map("capabilities")
 }
 
-/// tabela de junction M–N
 model CapabilityKnowledge {
   capability   Capability @relation(fields: [capabilityId], references: [id], onDelete: Cascade)
   capabilityId Int
