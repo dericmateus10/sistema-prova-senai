@@ -1,18 +1,149 @@
+// schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" 
   url      = env("DATABASE_URL")
 }
 
-model Curso {
-  id        Int      @id @default(autoincrement())
-  nome      String   @unique
-  descricao String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum Tipo {
+  BASICA
+  TECNICA
+}
 
-  @@map("cursos")
+model Course {
+  id   Int   @id @default(autoincrement())
+  name String
+
+  ucs  Uc[]
+
+  @@map("courses")
+}
+
+model Module {
+  id   Int   @id @default(autoincrement())
+  name String
+
+  ucs  Uc[]
+
+  @@map("modules")
+}
+
+model Uc {
+  id          Int                  @id @default(autoincrement())
+  description String
+  courseId    Int
+  moduleId    Int
+
+  course      Course               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module      Module               @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  saepCaps    CapabilitiesSaep[]
+  caps        Capability[]
+
+  @@index([courseId])
+  @@index([moduleId])
+  @@map("ucs")
+}
+
+model BloomTaxonomy {
+  id        Int                  @id @default(autoincrement())
+  name      String
+  examples  String?
+
+  saepCaps  CapabilitiesSaep[]
+  caps      Capability[]
+
+  @@map("bloom_taxonomies")
+}
+
+model CapabilitiesSaep {
+  id                Int               @id @default(autoincrement())
+  description       String
+  bloomTaxonomyId   Int
+  ucId              Int
+  tipo              Tipo
+
+  bloomTaxonomy     BloomTaxonomy     @relation(fields: [bloomTaxonomyId], references: [id], onDelete: Cascade)
+  uc                Uc                @relation(fields: [ucId], references: [id], onDelete: Cascade)
+  capabilities      Capability[]
+
+  @@index([bloomTaxonomyId])
+  @@index([ucId])
+  @@map("capabilities_saep")
+}
+
+model Functions {
+  id          Int               @id @default(autoincrement())
+  description String
+
+  subFuncs    SubFunction[]
+
+  @@map("functions")
+}
+
+model SubFunction {
+  id           Int                  @id @default(autoincrement())
+  description  String
+  functionId   Int
+
+  function     Functions            @relation(fields: [functionId], references: [id], onDelete: Cascade)
+  standards    PerformanceStandard[]
+
+  @@index([functionId])
+  @@map("sub_functions")
+}
+
+model PerformanceStandard {
+  id             Int           @id @default(autoincrement())
+  description    String
+  subFunctionId  Int
+
+  subFunction    SubFunction   @relation(fields: [subFunctionId], references: [id], onDelete: Cascade)
+
+  @@index([subFunctionId])
+  @@map("performance_standards")
+}
+
+model Knowledge {
+  id          Int                     @id @default(autoincrement())
+  description String
+  examples    String?
+
+  capLinks    CapabilityKnowledge[]
+
+  @@map("knowledge")
+}
+
+model Capability {
+  id                  Int                     @id @default(autoincrement())
+  description         String
+  bloomTaxonomyId     Int
+  ucId                Int
+  capabilitySaepId    Int?
+
+  bloomTaxonomy       BloomTaxonomy           @relation(fields: [bloomTaxonomyId], references: [id], onDelete: Cascade)
+  uc                  Uc                      @relation(fields: [ucId], references: [id], onDelete: Cascade)
+  saep                CapabilitiesSaep?       @relation(fields: [capabilitySaepId], references: [id], onDelete: Cascade)
+  knowledgeLinks      CapabilityKnowledge[]
+
+  @@index([bloomTaxonomyId])
+  @@index([ucId])
+  @@index([capabilitySaepId])
+  @@map("capabilities")
+}
+
+/// tabela de junction M–N
+model CapabilityKnowledge {
+  capability   Capability @relation(fields: [capabilityId], references: [id], onDelete: Cascade)
+  capabilityId Int
+
+  knowledge    Knowledge  @relation(fields: [knowledgeId], references: [id], onDelete: Cascade)
+  knowledgeId  Int
+
+  @@id([capabilityId, knowledgeId])
+  @@index([knowledgeId])
+  @@map("capability_knowledge")
 }
