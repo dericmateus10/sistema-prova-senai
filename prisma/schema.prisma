@@ -82,7 +82,7 @@ model CapabilitiesSaep {
   caps             Capability[]                @relation("SaepToCapabilities")
   subFunctionsLink CapabilitySaepSubFunction[] @relation("SaepToSubFunc")
   ucLinks          CapabilitySaepUc[]          @relation("UcToSaep")
-  QuestionItem     QuestionItem[]
+  questionItems    QuestionItem[]
 
   @@index([bloomTaxonomyId])
   @@map("capabilities_saep")
@@ -93,9 +93,9 @@ model Functions {
   id          Int    @id @default(autoincrement())
   description String
 
-  subFuncs     SubFunction[]               @relation("FuncToSubFunc")
-  saepLink     CapabilitySaepSubFunction[] @relation("SaepToSubFunc")
-  QuestionItem QuestionItem[]
+  subFuncs      SubFunction[]               @relation("FuncToSubFunc")
+  saepLink      CapabilitySaepSubFunction[] @relation("SaepToSubFunc")
+  questionItems QuestionItem[]
 
   @@map("functions")
 }
@@ -106,11 +106,11 @@ model SubFunction {
   description String
   functionId  Int
 
-  function     Functions                                  @relation("FuncToSubFunc", fields: [functionId], references: [id], onDelete: Cascade)
-  standards    PerformanceStandard[]                      @relation("SubFuncToPerf")
-  saepLink     CapabilitySaepSubFunction[]                @relation("SaepToSubFunc")
-  perfLink     CapabilitySubFunctionPerformanceStandard[] @relation("CapToPerf")
-  QuestionItem QuestionItem[]
+  function      Functions                                  @relation("FuncToSubFunc", fields: [functionId], references: [id], onDelete: Cascade)
+  standards     PerformanceStandard[]                      @relation("SubFuncToPerf")
+  saepLink      CapabilitySaepSubFunction[]                @relation("SaepToSubFunc")
+  perfLink      CapabilitySubFunctionPerformanceStandard[] @relation("CapToPerf")
+  questionItems QuestionItem[]
 
   @@index([functionId])
   @@map("sub_functions")
@@ -122,9 +122,9 @@ model PerformanceStandard {
   description   String
   subFunctionId Int
 
-  subFunction  SubFunction                                @relation("SubFuncToPerf", fields: [subFunctionId], references: [id], onDelete: Cascade)
-  capPerfLink  CapabilitySubFunctionPerformanceStandard[] @relation("CapToPerf")
-  QuestionItem QuestionItem[]
+  subFunction   SubFunction                                @relation("SubFuncToPerf", fields: [subFunctionId], references: [id], onDelete: Cascade)
+  capPerfLink   CapabilitySubFunctionPerformanceStandard[] @relation("CapToPerf")
+  questionItems QuestionItem[]
 
   @@index([subFunctionId])
   @@map("performance_standards")
@@ -137,7 +137,7 @@ model Knowledge {
   examples    String?
 
   capLinks          CapabilityKnowledge[] @relation("CapaToKnowledge")
-  QuestionKnowledge QuestionKnowledge[]
+  questionKnowledge QuestionKnowledge[]
 
   @@map("knowledge")
 }
@@ -163,34 +163,35 @@ model Capability {
   @@map("capabilities")
 }
 
-/// Junction: Capability <-> Knowledge
+/// Tabela de Conhecimento por Capacidade (antes junção composta)
 model CapabilityKnowledge {
+  id           Int @id @default(autoincrement())
   capabilityId Int
   knowledgeId  Int
 
   capability Capability @relation("CapaToKnowledge", fields: [capabilityId], references: [id], onDelete: Cascade)
   knowledge  Knowledge  @relation("CapaToKnowledge", fields: [knowledgeId], references: [id], onDelete: Cascade)
 
-  @@id([capabilityId, knowledgeId])
   @@index([knowledgeId])
   @@map("capability_knowledge")
 }
 
 /// Junction: CapabilitiesSaep <-> Uc
 model CapabilitySaepUc {
+  id               Int @id @default(autoincrement())
   capabilitySaepId Int
   ucId             Int
 
   capabilitySaep CapabilitiesSaep @relation("UcToSaep", fields: [capabilitySaepId], references: [id], onDelete: Cascade)
   uc             Uc               @relation("UcToSaep", fields: [ucId], references: [id], onDelete: Cascade)
 
-  @@id([capabilitySaepId, ucId])
   @@index([ucId])
   @@map("capability_saep_uc")
 }
 
 /// Junction: CapabilitiesSaep <-> Functions <-> SubFunction
 model CapabilitySaepSubFunction {
+  id               Int @id @default(autoincrement())
   capabilitySaepId Int
   functionId       Int
   subFunctionId    Int
@@ -199,13 +200,13 @@ model CapabilitySaepSubFunction {
   function       Functions        @relation("SaepToSubFunc", fields: [functionId], references: [id], onDelete: Cascade)
   subFunction    SubFunction      @relation("SaepToSubFunc", fields: [subFunctionId], references: [id], onDelete: Cascade)
 
-  @@id([capabilitySaepId, functionId, subFunctionId])
   @@index([functionId, subFunctionId])
   @@map("capability_saep_functions_sub_functions")
 }
 
 /// Junction: Capability <-> PerformanceStandard <-> SubFunction
 model CapabilitySubFunctionPerformanceStandard {
+  id                    Int @id @default(autoincrement())
   capabilityId          Int
   performanceStandardId Int
   subFunctionId         Int
@@ -214,7 +215,6 @@ model CapabilitySubFunctionPerformanceStandard {
   performance PerformanceStandard @relation("CapToPerf", fields: [performanceStandardId], references: [id], onDelete: Cascade)
   subFunction SubFunction         @relation("CapToPerf", fields: [subFunctionId], references: [id], onDelete: Cascade)
 
-  @@id([capabilityId, performanceStandardId, subFunctionId])
   @@index([performanceStandardId, subFunctionId])
   @@map("capabilities_sub_functions_performance_standard")
 }
@@ -249,13 +249,13 @@ model QuestionItem {
 
 /// Relação Perguntas <-> Conhecimentos
 model QuestionKnowledge {
+  id             Int @id @default(autoincrement())
   questionItemId Int
   knowledgeId    Int
 
   questionItem QuestionItem @relation(fields: [questionItemId], references: [id], onDelete: Cascade)
   knowledge    Knowledge    @relation(fields: [knowledgeId], references: [id], onDelete: Cascade)
 
-  @@id([questionItemId, knowledgeId])
   @@index([knowledgeId])
   @@map("question_knowledge")
 }
