@@ -10,7 +10,7 @@ datasource db {
 
 /// Enum para tipo de capacidade
 enum Tipo {
-  BASICA
+  BASICAn
   TECNICA
 }
 
@@ -156,6 +156,7 @@ model Capability {
   saep           CapabilitiesSaep?                          @relation("SaepToCapabilities", fields: [capabilitySaepId], references: [id], onDelete: Cascade)
   knowledgeLinks CapabilityKnowledge[]                      @relation("CapaToKnowledge")
   perfLink       CapabilitySubFunctionPerformanceStandard[] @relation("CapToPerf")
+  QuestionItem   QuestionItem[]
 
   @@index([bloomTaxonomyId])
   @@index([ucId])
@@ -221,26 +222,31 @@ model CapabilitySubFunctionPerformanceStandard {
 
 /// Itens de Avaliação (Perguntas)
 model QuestionItem {
-  id                    Int         @id @default(autoincrement())
-  textMd                String      @db.Text // Enunciado em Markdown
-  contextMd             String      @db.Text // Contexto em Markdown
-  commandMd             String      @db.Text // Comando em Markdown
-  difficulty            Dificuldade @default(MEDIO)
-  capabilitySaepId      Int
-  functionId            Int
-  subFunctionId         Int
-  performanceStandardId Int
+  id         Int         @id @default(autoincrement())
+  textMd     String      @db.Text // Enunciado em Markdown
+  contextMd  String      @db.Text // Contexto em Markdown
+  commandMd  String      @db.Text // Comando em Markdown
+  difficulty Dificuldade @default(MEDIO)
 
-  capabilitySaep      CapabilitiesSaep    @relation(fields: [capabilitySaepId], references: [id], onDelete: Cascade)
-  function            Functions           @relation(fields: [functionId], references: [id], onDelete: Cascade)
-  subFunction         SubFunction         @relation(fields: [subFunctionId], references: [id], onDelete: Cascade)
-  performanceStandard PerformanceStandard @relation(fields: [performanceStandardId], references: [id], onDelete: Cascade)
+  // Relações: opcionalmente SAEP ou Normal
+  capabilitySaepId      Int? // FK para Capacidades SAEP (opcional)
+  capabilityId          Int? // FK para Capacidades normais (opcional)
+  functionId            Int? // Funcão (opcional se normal)
+  subFunctionId         Int? // Subfunção (opcional se normal)
+  performanceStandardId Int? // Padrão de desempenho (opcional se normal)
+
+  capabilitySaep      CapabilitiesSaep?    @relation(fields: [capabilitySaepId], references: [id], onDelete: Cascade)
+  capability          Capability?          @relation(fields: [capabilityId], references: [id], onDelete: Cascade)
+  function            Functions?           @relation(fields: [functionId], references: [id], onDelete: Cascade)
+  subFunction         SubFunction?         @relation(fields: [subFunctionId], references: [id], onDelete: Cascade)
+  performanceStandard PerformanceStandard? @relation(fields: [performanceStandardId], references: [id], onDelete: Cascade)
 
   knowledgeLinks QuestionKnowledge[]
   alternatives   Alternative[]
   attachments    Attachment[]
 
   @@index([capabilitySaepId])
+  @@index([capabilityId])
   @@index([functionId])
   @@index([subFunctionId])
   @@index([performanceStandardId])
